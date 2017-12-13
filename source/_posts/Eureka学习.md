@@ -1,7 +1,7 @@
 ---
 title: Eureka入门
 date: 2017-12-13 19:21:21
-tags: spring cloud,eureka
+tags: [spring cloud,eureka]
 categories: code
 ---
 

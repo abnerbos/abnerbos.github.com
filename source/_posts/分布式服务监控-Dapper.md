@@ -1,7 +1,7 @@
 ---
 title: 分布式服务监控--Dapper
 date: 2017-12-13 19:31:48
-tags: Dapper,Zipkin
+tags: [Dapper,Zipkin]
 categories: code
 ---
 
