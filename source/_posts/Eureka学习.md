@@ -17,3 +17,10 @@ Spring Cloud 引入的Eureka，分布式服务模块
 
 
 
+> A Eureka client application is referred to as an *instance*. There’s a subtle difference between a client application and Eureka client; the former is your application while the latter is a component provided by the framework.
+
+
+
+@too see
+
+[a nice blog](https://blog.asarkar.org/)
