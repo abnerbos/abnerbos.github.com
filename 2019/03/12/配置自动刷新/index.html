@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Zookeeper,Spring Boot,Spring cloud,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="Any time you need a switch that works immediately  前言很早之前，就想把项目中用到的配置热更新同步到博客中，嚷嚷着等空了就把文章给补上，还担心自己忘记了，在之前的文章中加上了TODO。最终还是无济于事，拖到了今天，拖到了一段旅程要结束的时候。 View大体的方案流程是依托于Zookeeper进行配置管理，监听配置变更，自动执行项目中Environ">
+<meta name="keywords" content="Zookeeper,Spring Boot,Spring cloud">
+<meta property="og:type" content="article">
+<meta property="og:title" content="配置热更新">
+<meta property="og:url" content="http://yoursite.com/2019/03/12/配置自动刷新/index.html">
+<meta property="og:site_name" content="且行">
+<meta property="og:description" content="Any time you need a switch that works immediately  前言很早之前，就想把项目中用到的配置热更新同步到博客中，嚷嚷着等空了就把文章给补上，还担心自己忘记了，在之前的文章中加上了TODO。最终还是无济于事，拖到了今天，拖到了一段旅程要结束的时候。 View大体的方案流程是依托于Zookeeper进行配置管理，监听配置变更，自动执行项目中Environ">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://i.loli.net/2019/03/13/5c88e28846713.jpg">
+<meta property="og:updated_time" content="2019-03-14T03:30:03.627Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="配置热更新">
+<meta name="twitter:description" content="Any time you need a switch that works immediately  前言很早之前，就想把项目中用到的配置热更新同步到博客中，嚷嚷着等空了就把文章给补上，还担心自己忘记了，在之前的文章中加上了TODO。最终还是无济于事，拖到了今天，拖到了一段旅程要结束的时候。 View大体的方案流程是依托于Zookeeper进行配置管理，监听配置变更，自动执行项目中Environ">
+<meta name="twitter:image" content="https://i.loli.net/2019/03/13/5c88e28846713.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/03/12/配置自动刷新/">
+
+
+
+
+
+  <title>配置热更新 | 且行</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">且行</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/03/12/配置自动刷新/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="abnerbos">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/my_avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="且行">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">配置热更新</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-12T15:21:37+08:00">
+                2019-03-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/code/" itemprop="url" rel="index">
+                    <span itemprop="name">code</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2019/03/12/配置自动刷新/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2019/03/12/配置自动刷新/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p>Any time you need a switch that works immediately</p>
+</blockquote>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>很早之前，就想把项目中用到的<code>配置热更新</code>同步到博客中，嚷嚷着等空了就把文章给补上，还担心自己忘记了，在之前的文章中加上了TODO。最终还是无济于事，拖到了今天，拖到了一段旅程要结束的时候。</p>
+<h2 id="View"><a href="#View" class="headerlink" title="View"></a>View</h2><p>大体的方案流程是依托于Zookeeper进行配置管理，监听配置变更，自动执行项目中Environment properties、@ConfigurationProperties和@Value 配置更新，达到不重启工程，配置实时更新的目的。</p>
+<p><img src="https://i.loli.net/2019/03/13/5c88e28846713.jpg" alt=""></p>
+<a id="more"></a>
+<p>Zookeeper watcher的过程按下不表，Environment properties也是覆盖即可，着重讨论下如何进行bean热更新</p>
+<h3 id="第一版"><a href="#第一版" class="headerlink" title="第一版"></a>第一版</h3><p>最初的设想是，手动从Context中获取所有需要更新的bean，@ConfigurationProperties 类可以通过注解进行获取，但@Value放在Field上，需要特殊处理。要么直接扫描容器中的所有bean，要么增加注解进行标记。考虑到毕竟只有少部分的bean需要进行更新，采取后者，增加@YqgZookeeperPropertyWatcher统一标注需要热更新的bean。</p>
+<ul>
+<li>获取所有@YqgZookeeperPropertyWatcher 标注的bean</li>
+<li>由于代理的存在，需要获取到目标对象</li>
+<li>@ConfigurationProperties 配置需要手动拼接 prefix 和 fileldName，fileldName采取通用的驼峰转中划线方式</li>
+<li>使用 environment.resolveRequiredPlaceholders 通过产生的key获取配置的属性信息</li>
+<li>通过反射将获取到的属性信息写回去，只处理了常用的基本类型</li>
+</ul>
+<p>部分代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">nodeChanged</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">  Map&lt;String, Object&gt; configMap = YqgZookeeperDataParser.getPrefixData(nodeCache.getCurrentData().getData(), prefix);</span><br><span class="line">  environment.getPropertySources().addAfter(RandomValuePropertySource.RANDOM_PROPERTY_SOURCE_NAME, <span class="keyword">new</span> MapPropertySource(ZOOKEEPER_PROPERTY_SOURCE, configMap));</span><br><span class="line">  Map&lt;String, Object&gt; beanMap = applicationContext.getBeansWithAnnotation(YqgZookeeperPropertyWatcher.class);   </span><br><span class="line">  <span class="keyword">for</span> (Object object : beanMap.values()) &#123;</span><br><span class="line">    Object bean = getTarget(object);    </span><br><span class="line">    Class clazz = bean.getClass();    </span><br><span class="line">    ConfigurationProperties configAnnotation = (ConfigurationProperties) clazz.getAnnotation(ConfigurationProperties.class); </span><br><span class="line">  <span class="keyword">for</span> (Field field : FieldUtils.getAllFieldsList(clazz)) &#123;</span><br><span class="line">      Value valueAnnotation = field.getAnnotation(Value.class);    </span><br><span class="line">      String data = <span class="keyword">null</span>;</span><br><span class="line">      <span class="keyword">if</span> (<span class="keyword">null</span> != valueAnnotation) &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">          data = environment.resolveRequiredPlaceholders(valueAnnotation.value());</span><br><span class="line">          &#125; <span class="keyword">catch</span> (IllegalArgumentException ex) &#123;</span><br><span class="line">          log.warn(<span class="string">"占位符解析失败, bean:&#123;&#125; 属性:&#123;&#125;注解为:&#123;&#125;"</span>, bean, field.getName(), valueAnnotation.value());</span><br><span class="line">        &#125;</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">null</span> != configAnnotation) &#123;</span><br><span class="line">        data = environment.getProperty(configAnnotation.prefix() + <span class="string">"."</span> + getFieldConfigName(field));</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (<span class="keyword">null</span> == data) &#123;</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      setFieldData(bean, field, data);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">setFieldData</span><span class="params">(Object bean, Field field, Object data)</span> <span class="keyword">throws</span> NoSuchMethodException, InvocationTargetException, IllegalAccessException </span>&#123;</span><br><span class="line">  log.info(<span class="string">"监听zk信息， 更新bean:&#123;&#125; 属性:&#123;&#125; 为:&#123;&#125;"</span>, bean, field.getName(), data);</span><br><span class="line">  String typeName = field.getGenericType().getTypeName();</span><br><span class="line">  field.setAccessible(<span class="keyword">true</span>);   </span><br><span class="line">  <span class="keyword">switch</span> (typeName) &#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="string">"java.lang.String"</span>:</span><br><span class="line">      field.set(bean, data.toString());</span><br><span class="line">      <span class="keyword">break</span>; </span><br><span class="line">    <span class="keyword">case</span> <span class="string">"java.lang.Boolean"</span>:</span><br><span class="line">    <span class="keyword">case</span> <span class="string">"boolean"</span>:</span><br><span class="line">      field.setBoolean(bean, Boolean.valueOf(data.toString()));</span><br><span class="line">      <span class="keyword">break</span>; </span><br><span class="line">    <span class="keyword">case</span> <span class="string">"java.lang.Integer"</span>:</span><br><span class="line">    <span class="keyword">case</span> <span class="string">"int"</span>:</span><br><span class="line">      field.setInt(bean, Integer.parseInt(data.toString()));</span><br><span class="line">      <span class="keyword">break</span>; </span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">      log.warn(<span class="string">"暂不支持类型:&#123;&#125;"</span>, typeName);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">  <span class="function"><span class="keyword">private</span> String <span class="title">getSetMethodName</span><span class="params">(Field field)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">"set"</span> + field.getName().substring(<span class="number">0</span>, <span class="number">1</span>).toUpperCase() + field.getName().substring(<span class="number">1</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="function"><span class="keyword">private</span> String <span class="title">getFieldConfigName</span><span class="params">(Field field)</span> </span>&#123;</span><br><span class="line">    StringBuilder sb = <span class="keyword">new</span> StringBuilder();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">char</span> c : field.getName().toCharArray()) &#123;</span><br><span class="line">      <span class="keyword">if</span> (CharUtils.isAsciiAlphaUpper(c)) &#123;</span><br><span class="line">        sb.append(<span class="string">'-'</span>).append(Character.toLowerCase(c));</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        sb.append(c);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> sb.toString();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> Object <span class="title">getTarget</span><span class="params">(Object object)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (!AopUtils.isAopProxy(object)) &#123;</span><br><span class="line">    <span class="keyword">return</span> object;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (AopUtils.isJdkDynamicProxy(object)) &#123;</span><br><span class="line">    <span class="keyword">return</span> getJdkDynamicProxyTargetObject(object);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> getCglibProxyTargetObject(object);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> Object <span class="title">getCglibProxyTargetObject</span><span class="params">(Object proxy)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">  Field h = proxy.getClass().getDeclaredField(<span class="string">"CGLIB$CALLBACK_0"</span>);</span><br><span class="line">  h.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">  Object dynamicAdvisedInterceptor = h.get(proxy);</span><br><span class="line">  Field advised = dynamicAdvisedInterceptor.getClass().getDeclaredField(<span class="string">"advised"</span>);</span><br><span class="line">  advised.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">  <span class="keyword">return</span> ((AdvisedSupport) advised.get(dynamicAdvisedInterceptor)).getTargetSource().getTarget(); </span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> Object <span class="title">getJdkDynamicProxyTargetObject</span><span class="params">(Object proxy)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">  Field h = proxy.getClass().getSuperclass().getDeclaredField(<span class="string">"h"</span>);</span><br><span class="line">  h.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">  AopProxy aopProxy = (AopProxy) h.get(proxy);</span><br><span class="line">  Field advised = aopProxy.getClass().getDeclaredField(<span class="string">"advised"</span>);</span><br><span class="line">  advised.setAccessible(<span class="keyword">true</span>);</span><br><span class="line">  <span class="keyword">return</span> ((AdvisedSupport) advised.get(aopProxy)).getTargetSource().getTarget(); </span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<h3 id="第二版"><a href="#第二版" class="headerlink" title="第二版"></a>第二版</h3><p>第一版中bean都是手动反射进行更新，处理的也只是简单基本类型，并且@ConfigurationProperties 也不支持嵌套，@Value如果有spel表达式的话无法更新，只能满足基本日常使用了，这版代码在线上跑了小半年。</p>
+<ul>
+<li>解决@ConfigurationProperties无法处理嵌套类型，使用Spring Boot自带的EnvironmentChangeEvent事件进行更新</li>
+<li>@Value在处理过程中，过滤掉SPEL表达式，使用更友好的 environment.getConversionService() 进行类型转换和FieldUtils.writeField 数据设置</li>
+<li>由于公司所有项目的配置放在ZK同一个节点上，其他项目配置的变动也会触发watcher，每次进行前置diff，无改动不更新</li>
+<li>由于数据库等加密配置的存在，远端的配置必定和容器的数据不等，不想处理解密过程，手动过滤掉加密配置信息</li>
+</ul>
+<p>调整了大部分逻辑：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">nodeChanged</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">  Map&lt;String, Object&gt; currentDataMap = obtainZookeeperPropertyData();</span><br><span class="line">  Map&lt;String, Object&gt; configDataMap = YqgZookeeperDataParser.getPrefixData(nodeCache.getCurrentData().getData(), prefix);</span><br><span class="line">  fillEncryptConfig(currentDataMap, configDataMap);</span><br><span class="line">  Set&lt;String&gt; keys = changes(currentDataMap, configDataMap).keySet();</span><br><span class="line">  <span class="keyword">if</span> (CollectionUtils.isEmpty(keys)) &#123;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  currentDataMap.putAll(configDataMap);</span><br><span class="line">  environment.getPropertySources().addAfter(RandomValuePropertySource.RANDOM_PROPERTY_SOURCE_NAME, <span class="keyword">new</span> MapPropertySource(ZOOKEEPER_PROPERTY_SOURCE, currentDataMap));</span><br><span class="line">  doRefreshValue();</span><br><span class="line">  doRefreshConfigurationProperties(keys); </span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">doRefreshValue</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">  Map&lt;String, Object&gt; beanMap = applicationContext.getBeansWithAnnotation(YqgZookeeperPropertyWatcher.class);   </span><br><span class="line">  <span class="keyword">for</span> (Object object : beanMap.values()) &#123;</span><br><span class="line">    Object bean = getTarget(object);</span><br><span class="line">    Class clazz = bean.getClass();</span><br><span class="line">    <span class="keyword">for</span> (Field field : FieldUtils.getAllFieldsList(clazz)) &#123;</span><br><span class="line">      Value valueAnnotation = field.getAnnotation(Value.class);   <span class="keyword">if</span> (<span class="keyword">null</span> != valueAnnotation) &#123;</span><br><span class="line">        <span class="keyword">if</span> (isSpelExpression(valueAnnotation.value())) &#123;</span><br><span class="line">          <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">          String property = environment.resolveRequiredPlaceholders(valueAnnotation.value());</span><br><span class="line">          Object data = environment.getConversionService().convert(property, field.getType());</span><br><span class="line">          FieldUtils.writeField(field, object, data, <span class="keyword">true</span>);</span><br><span class="line">          log.info(<span class="string">"监听zk信息， 更新bean:&#123;&#125; 属性:&#123;&#125; 为:&#123;&#125;"</span>, bean, field.getName(), data);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IllegalArgumentException ex) &#123;</span><br><span class="line">          log.warn(<span class="string">"占位符解析失败, bean:&#123;&#125; 属性:&#123;&#125;注解为:&#123;&#125;"</span>, bean, field.getName(), valueAnnotation.value());</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">doRefreshConfigurationProperties</span><span class="params">(Set&lt;String&gt; keys)</span> </span>&#123;</span><br><span class="line">  log.info(<span class="string">"发布事件EnvironmentChangeEvent，涉及配置为:&#123;&#125;"</span>, keys);</span><br><span class="line">  applicationContext.publishEvent(<span class="keyword">new</span> EnvironmentChangeEvent(keys)); &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">isSpelExpression</span><span class="params">(String expression)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> StringUtils.isNotBlank(expression) &amp;&amp; expression.startsWith(<span class="string">"#&#123;"</span>) &amp;&amp; expression.endsWith(<span class="string">"&#125;"</span>); &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">isJasyptEncrypt</span><span class="params">(String property)</span></span>&#123;</span><br><span class="line">  <span class="keyword">return</span> StringUtils.isNotBlank(property) &amp;&amp; property.startsWith(<span class="string">"ENC("</span>) &amp;&amp; property.endsWith(<span class="string">")"</span>); &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> Map&lt;String, Object&gt; <span class="title">obtainZookeeperPropertyData</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  PropertySource&lt;?&gt; propertySource = environment.getPropertySources().get(ZOOKEEPER_PROPERTY_SOURCE);</span><br><span class="line">  Map&lt;String, Object&gt; dataMap = <span class="keyword">new</span> HashMap&lt;&gt;();</span><br><span class="line">  extract(propertySource, dataMap);</span><br><span class="line">  <span class="keyword">return</span> dataMap;   </span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">extract</span><span class="params">(PropertySource&lt;?&gt; parent, Map&lt;String, Object&gt; result)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (parent <span class="keyword">instanceof</span> CompositePropertySource) &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      List&lt;PropertySource&lt;?&gt;&gt; sources = <span class="keyword">new</span> ArrayList&lt;PropertySource&lt;?&gt;&gt;();</span><br><span class="line">      <span class="keyword">for</span> (PropertySource&lt;?&gt; source : ((CompositePropertySource) parent).getPropertySources()) &#123;</span><br><span class="line">        sources.add(<span class="number">0</span>, source);</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">for</span> (PropertySource&lt;?&gt; source : sources) &#123;</span><br><span class="line">        extract(source, result);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (parent <span class="keyword">instanceof</span> EnumerablePropertySource) &#123;</span><br><span class="line">    <span class="keyword">for</span> (String key : ((EnumerablePropertySource&lt;?&gt;) parent).getPropertyNames()) &#123;</span><br><span class="line">      result.put(key, parent.getProperty(key));</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> Map&lt;String, Object&gt; <span class="title">changes</span><span class="params">(Map&lt;String, Object&gt; before,</span></span></span><br><span class="line"><span class="function"><span class="params">  Map&lt;String, Object&gt; after)</span> </span>&#123;</span><br><span class="line">  Map&lt;String, Object&gt; result = <span class="keyword">new</span> HashMap&lt;&gt;();</span><br><span class="line">  <span class="keyword">for</span> (String key : before.keySet()) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!after.containsKey(key)) &#123;</span><br><span class="line">      result.put(key, <span class="keyword">null</span>);</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!equal(before.get(key), after.get(key))) &#123;</span><br><span class="line">      result.put(key, after.get(key));</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  <span class="keyword">for</span> (String key : after.keySet()) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!before.containsKey(key)) &#123;</span><br><span class="line">      result.put(key, after.get(key));</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result; </span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">fillEncryptConfig</span><span class="params">(Map&lt;String, Object&gt; before, Map&lt;String, Object&gt; after)</span> </span>&#123;</span><br><span class="line">  Iterator&lt;String&gt; iterator = after.keySet().iterator();</span><br><span class="line">  <span class="keyword">while</span> (iterator.hasNext()) &#123;</span><br><span class="line">    String key = iterator.next();</span><br><span class="line">  <span class="keyword">if</span> (isJasyptEncrypt(after.get(key).toString())) &#123;</span><br><span class="line">      <span class="keyword">if</span> (before.containsKey(key)) &#123;</span><br><span class="line">        after.put(key, before.get(key));</span><br><span class="line">   &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        iterator.remove();</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="第三版"><a href="#第三版" class="headerlink" title="第三版"></a>第三版</h3><p>其实第二版，已经能非常友好的处理热更新了，线上响应正常，使用上也非常透明，唯一还遗留的就是@Value 处理太粗暴，SPEL表达式仍不支持，加之最近想整理这篇文档，再次查阅了相关文档。比较大的收获是Spring Cloud已经囊括了以上的热更新，在Spring Cloud Config中可使用git作为配置配置源，调用EndPoint进行刷新。其实一年前，看过相关内容，但没想好怎么和ZK进行合并。所以，准备再更新一般，使用Spring的实现再次简化逻辑。</p>
+<p>核心代码在于使用scope进行更新，简化原有的@Value更新逻辑<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">doRefreshValue</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">  scope.refreshAll(); </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Spring Cloud 热更新逻辑可参考： <a href="http://www.scienjus.com/spring-cloud-refresh/" target="_blank" rel="noopener">http://www.scienjus.com/spring-cloud-refresh/</a></p>
+<p>文章最末提到：</p>
+<blockquote>
+<p>在使用 Eureka 的项目中要谨慎的使用热更新，过于频繁的更新可能会使大量项目频繁的标记下线和上线，需要注意</p>
+</blockquote>
+<p>查看了github 上相关 issue : <a href="https://github.com/spring-cloud/spring-cloud-netflix/issues/1857" target="_blank" rel="noopener">https://github.com/spring-cloud/spring-cloud-netflix/issues/1857</a> ,可以通过升级版本来解决，本地实践了下，发现升级后代码并未变化，<code>EurekaDiscoveryClientConfiguration</code> 还是会进行下线并上线的操作，具体启动工程观察日志也确实是这样，这个问题可能得留到后面上线再持续进行观察。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>用Java的好处，在于你需要的大部分功能，框架都能帮你提供，或早或晚，虽然遗憾没能早点借用Spring Cloud的实现，简化逻辑的同时提高代码可读性，但终究是这一步步走来，才加深了自己的理解，提升自己对框架的把握。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Zookeeper/" rel="tag"># Zookeeper</a>
+          
+            <a href="/tags/Spring-Boot/" rel="tag"># Spring Boot</a>
+          
+            <a href="/tags/Spring-cloud/" rel="tag"># Spring cloud</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/11/09/明天要面试个排长/" rel="next" title="明天要面试个排长">
+                <i class="fa fa-chevron-left"></i> 明天要面试个排长
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/my_avatar.png" alt="abnerbos">
+            
+              <p class="site-author-name" itemprop="name">abnerbos</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">8</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/abnerbos" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-globe"></i>GitHub</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#View"><span class="nav-number">2.</span> <span class="nav-text">View</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#第一版"><span class="nav-number">2.1.</span> <span class="nav-text">第一版</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第二版"><span class="nav-number">2.2.</span> <span class="nav-text">第二版</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第三版"><span class="nav-number">2.3.</span> <span class="nav-text">第三版</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">abnerbos</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'NNxc7iCMRHebCeoM79elyAWK-gzGzoHsz',
+        appKey: 'YtwcEbyHFY6u6880RIBP9vdu',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
